@@ -5,6 +5,7 @@ import numpy as np
 import os
 
 face_cascade = cv2.CascadeClassifier("./haarcascade_frontalface_default.xml")
+eye_cascade = cv2.CascadeClassifier("./haarcascade_eye.xml")
 
 def detect_faces(our_image):
     new_img = np.array(our_image.convert("RGB"))
@@ -12,6 +13,29 @@ def detect_faces(our_image):
     for (x, y, w, h) in faces:
         cv2.rectangle(new_img, (x, y), (x + w, y + h), (255, 0, 0), 2)
     return new_img, faces
+
+def detect_eyes(our_image):
+    new_img = np.array(our_image.convert("RGB"))
+    eyes = eye_cascade.detectMultiScale(new_img, 1.1, 6)
+    for (x, y, w, h) in eyes:
+        cv2.rectangle(new_img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    return new_img
+
+def cartoonize_image(our_image):
+    new_img = np.array(our_image.convert("RGB"))
+    gray = cv2.cvtColor(new_img, cv2.COLOR_BGR2GRAY)
+    gray = cv2.medianBlur(gray, 5)
+    edges = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 9, 9)
+    color = cv2.bilateralFilter(new_img, 9, 300, 300)
+    cartoon = cv2.bitwise_and(color, color, mask = edges)
+    return cartoon
+
+def cannize_image(our_image):
+    new_img = np.array(our_image.convert("RGB"))
+    img = cv2.GaussianBlur(new_img, (13, 13), 0)
+    canny = cv2.Canny(img, 100, 150)
+    return canny
+
 
 # 일반적인 프로그램의 경우 entry point
 # C나 자바의 경우 main()이라는 함수가 그 예!
@@ -79,11 +103,14 @@ def main():
                 st.success("찾은 얼굴은 모두 {}개".format(len(result_faces)))
                 st.warning("다시 한번?")
             elif feature_choice == "Eyes":
-                pass
+                result_img = detect_eyes(our_image)
+                st.image(result_img)
             elif feature_choice == "Cartoonize":
-                pass
+                result_img = cartoonize_image(our_image)
+                st.image(result_img)
             elif feature_choice == "Cannize":
-                pass            
+                result_img = cannize_image(our_image)
+                st.image(result_img)           
 
     elif choice == "About":
         st.subheader("개발자를 소개합니다.")
